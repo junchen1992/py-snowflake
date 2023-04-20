@@ -3,13 +3,13 @@ from os.path import join, dirname
 import setuptools
 
 setuptools.setup(
-    name='py-snowflake',
+    name='py-snowflake-id',
     version='0.0.1',
     author='junchen1992',
     author_email='jason.junchen1992@gmail.com',
     url='https://github.com/junchen1992/py-snowflake',
     license='MIT',
-    description='Generate SnowFlake IDs and parse them back with Python.',
+    description='Generate Snowflake IDs and parse them back with Python.',
     long_description=open(join(dirname(__file__), 'README.md')).read(),
     long_description_content_type='text/markdown',
     packages=setuptools.find_packages(),
