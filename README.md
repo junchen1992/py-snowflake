@@ -1,2 +1,2 @@
 # py-snowflake
-Generate SnowFlake IDs and parse them back with Python. 
+Generate Snowflake IDs and parse them back with Python. 
