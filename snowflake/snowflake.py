@@ -76,19 +76,16 @@ class SnowflakeID:
 
 
 class SnowflakeGenerator:
-    def __init__(self, instance: int = 0, seq: int = 0,
-                 timestamp: Optional[int] = None):
 
-        current = int(time() * 1000)
+    def __init__(self, instance: int = 0, seq: int = 0, timestamp: Optional[int] = None):
+        current = self.get_new_ts()
         if current - START_TS >= MAX_TS:
-            raise OverflowError(f"The maximum current timestamp has been reached in selected epoch,"
+            raise OverflowError(f"The maximum current timestamp has been reached,"
                                 f"so Snowflake cannot generate more IDs!")
 
         timestamp = timestamp or current
         if timestamp < 0 or timestamp > current:
             raise ValueError(f"timestamp must not be negative and must be less than {current}!")
-
-        self._ts = timestamp - START_TS
 
         if instance < 0 or instance > MAX_INSTANCE:
             raise ValueError(f"instance must not be negative and must be less than {MAX_INSTANCE}!")
@@ -96,18 +93,19 @@ class SnowflakeGenerator:
         if seq < 0 or seq > MAX_SEQ:
             raise ValueError(f"seq must not be negative and must be less than {MAX_SEQ}!")
 
-        self._instance = instance << 12
+        self._ts = timestamp - START_TS
+        self._instance = instance
         self._seq = seq
 
     @classmethod
     def from_snowflake(cls, sf: SnowflakeID) -> 'SnowflakeGenerator':
-        return cls(sf.instance, seq=sf.seq, timestamp=sf.timestamp)
+        return cls(instance=sf.instance, seq=sf.seq, timestamp=sf.timestamp)
 
     def __iter__(self):
         return self
 
     def __next__(self) -> Optional[int]:
-        current = int(time() * 1000) - START_TS
+        current = self.get_new_ts() - START_TS
 
         if current >= MAX_TS:
             raise OverflowError(f"The maximum current timestamp has been reached in selected epoch,"
@@ -115,13 +113,22 @@ class SnowflakeGenerator:
 
         if self._ts == current:
             if self._seq == MAX_SEQ:
-                return None
+                current = self.get_next_mill()
             self._seq += 1
-        elif self._ts > current:
-            return None
         else:
             self._seq = 0
 
         self._ts = current
 
-        return self._ts << 22 | self._instance | self._seq
+        return self._ts << 22 | self._instance << 12 | self._seq
+
+    def get_next_mill(self):
+        mill = self.get_new_ts()
+        while mill <= self._ts:
+            mill = self.get_new_ts()
+
+        return mill
+
+    @staticmethod
+    def get_new_ts():
+        return int(time() * 1000)
